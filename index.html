@@ -66,10 +66,83 @@
     <main id="view-profile" class="view" aria-label="Profil">
       <div class="page">
         <h2>Profil</h2>
-        <div class="profile-card">
-          <div class="avatar big" style="--c1:#7c5cff;--c2:#ff4fd8">Du</div>
-          <p class="muted">Inloggning och profil kommer i etapp 3.</p>
+        <!-- Konto (etapp 3). account.js visar en av rutorna nedan åt gången. -->
+        <div id="account-loading" class="account-box"><p class="muted">Laddar konto…</p></div>
+
+        <div id="account-setup" class="account-box" hidden>
+          <strong>Konton är inte påslagna än</strong>
+          <p id="account-setup-text" class="muted"></p>
+          <button id="account-retry" class="secondary-btn" type="button" hidden>Försök igen</button>
         </div>
+
+        <div id="auth-box" class="account-box" hidden>
+          <div class="segmented" role="tablist" aria-label="Logga in eller skapa konto">
+            <button type="button" id="tab-login" class="seg-btn active" role="tab" aria-selected="true">Logga in</button>
+            <button type="button" id="tab-signup" class="seg-btn" role="tab" aria-selected="false">Skapa konto</button>
+          </div>
+          <form id="auth-form" class="form">
+            <label id="signup-name-row" class="field" hidden>
+              <span>Ditt namn</span>
+              <input id="auth-name" name="name" type="text" maxlength="30" autocomplete="nickname" placeholder="T.ex. Andreas">
+            </label>
+            <label class="field">
+              <span>E-post</span>
+              <input id="auth-email" name="email" type="email" required autocomplete="email" inputmode="email" placeholder="du@exempel.se">
+            </label>
+            <label class="field">
+              <span>Lösenord</span>
+              <input id="auth-password" name="password" type="password" required minlength="8" autocomplete="current-password" placeholder="Minst 8 tecken">
+            </label>
+            <button id="auth-submit" class="primary-btn" type="submit">Logga in</button>
+            <button id="forgot-btn" class="link-btn" type="button">Glömt lösenordet?</button>
+          </form>
+          <p id="auth-msg" class="msg" role="status" aria-live="polite" hidden></p>
+        </div>
+
+        <div id="recovery-box" class="account-box" hidden>
+          <strong>Välj ett nytt lösenord</strong>
+          <form id="recovery-form" class="form">
+            <label class="field">
+              <span>Nytt lösenord</span>
+              <input id="recovery-password" type="password" required minlength="8" autocomplete="new-password" placeholder="Minst 8 tecken">
+            </label>
+            <button id="recovery-submit" class="primary-btn" type="submit">Spara lösenord</button>
+          </form>
+          <p id="recovery-msg" class="msg" role="status" aria-live="polite" hidden></p>
+        </div>
+
+        <div id="profile-box" hidden>
+          <div class="profile-card">
+            <div id="profile-avatar" class="avatar big">?</div>
+            <strong id="profile-name" class="profile-name"></strong>
+            <span id="profile-username" class="muted"></span>
+            <span id="profile-email" class="muted"></span>
+          </div>
+
+          <form id="profile-form" class="account-box form">
+            <strong>Redigera profil</strong>
+            <label class="field">
+              <span>Visningsnamn</span>
+              <input id="profile-display-name" type="text" required maxlength="30" autocomplete="nickname">
+            </label>
+            <label class="field">
+              <span>Användarnamn (valfritt)</span>
+              <input id="profile-handle" type="text" maxlength="20" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="3–20 tecken: a–z, 0–9, _">
+            </label>
+            <fieldset class="field colors">
+              <legend>Färg</legend>
+              <div id="color-choices" class="color-choices"></div>
+            </fieldset>
+            <button id="profile-save" class="primary-btn" type="submit">Spara</button>
+            <p id="profile-msg" class="msg" role="status" aria-live="polite" hidden></p>
+          </form>
+
+          <div class="account-actions">
+            <button id="logout-btn" class="secondary-btn" type="button">Logga ut</button>
+            <button id="delete-btn" class="danger-btn" type="button">Radera mitt konto</button>
+          </div>
+        </div>
+
         <div class="settings">
           <div class="setting">
             <div>
@@ -103,6 +176,9 @@
   </div>
 
   <script src="vendor/maplibre-gl/maplibre-gl.js"></script>
+  <script src="vendor/supabase/supabase.js"></script>
+  <script src="config.js"></script>
   <script src="app.js"></script>
+  <script src="account.js"></script>
 </body>
 </html>
