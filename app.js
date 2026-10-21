@@ -7,7 +7,7 @@ const LIVE_LIMIT_SECONDS = 120;
 
 // Kartinställningar. OpenFreeMap är gratis, utan konto och API-nyckel, och tillåter kommersiell användning.
 const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/dark";
-const DEFAULT_CENTER = { lat: 59.3293, lng: 18.0686 }; // Stockholm, bara om appen aldrig har fått din position
+const DEFAULT_CENTER = { lat: 59.8360, lng: 13.1430 }; // Sunne, bara om appen aldrig har fått din position
 // Ungefär var du var senast (avrundat till ~100 m). Sparas bara i den här webbläsaren, så att kartan
 // kan starta nära dig direkt medan GPS:en letar. Raderas när du loggar ut.
 const LAST_CENTER_KEY = "pulse-last-center";
@@ -258,7 +258,7 @@ function readLastCenter() {
     const c = JSON.parse(localStorage.getItem(LAST_CENTER_KEY));
     if (c && Number.isFinite(c.lat) && Number.isFinite(c.lng)) return c;
   } catch (e) {
-    // Privat läge eller blockerad lagring: starta i Stockholm.
+    // Privat läge eller blockerad lagring: starta i Sunne.
   }
   return null;
 }
