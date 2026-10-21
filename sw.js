@@ -3,7 +3,24 @@
 const CACHE_PREFIX = "pulse-";
 const CACHE = CACHE_PREFIX + "v1";
 
-self.addEventListener("install", () => self.skipWaiting());
+// Appens grundfiler sparas direkt vid installation, så att den kan öppnas offline.
+const APP_SHELL = [
+  "./",
+  "index.html",
+  "style.css",
+  "app.js",
+  "manifest.json",
+  "icons/icon-192.png",
+  "icons/icon-512.png",
+];
+
+self.addEventListener("install", event => {
+  event.waitUntil(
+    caches.open(CACHE)
+      .then(cache => cache.addAll(APP_SHELL))
+      .then(() => self.skipWaiting())
+  );
+});
 
 self.addEventListener("activate", event => {
   event.waitUntil(
@@ -18,7 +35,8 @@ self.addEventListener("fetch", event => {
   event.respondWith(
     fetch(event.request)
       .then(response => {
-        if (response.ok) {
+        const noStore = /no-store/i.test(response.headers.get("Cache-Control") || "");
+        if (response.ok && !noStore) {
           const copy = response.clone();
           event.waitUntil(
             caches.open(CACHE)
