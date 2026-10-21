@@ -270,7 +270,7 @@ function onFix(pos) {
   geoDenied = false;
   const { latitude, longitude, accuracy } = pos.coords;
   lastFix = { lat: latitude, lng: longitude, accuracy, time: pos.timestamp };
-  showMe(latitude, longitude, accuracy, !locatedOnce);
+  showMe(latitude, longitude, accuracy, !locatedOnce && !startedAtMe && !userMovedMap);
   locatedOnce = true;
   maybeSend(false);
 }

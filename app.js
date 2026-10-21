@@ -7,13 +7,18 @@ const LIVE_LIMIT_SECONDS = 120;
 
 // Kartinställningar. OpenFreeMap är gratis, utan konto och API-nyckel, och tillåter kommersiell användning.
 const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/dark";
-const DEFAULT_CENTER = { lat: 59.3293, lng: 18.0686 }; // Stockholm, används tills du själv visar din position
+const DEFAULT_CENTER = { lat: 59.3293, lng: 18.0686 }; // Stockholm, bara om appen aldrig har fått din position
+// Ungefär var du var senast (avrundat till ~100 m). Sparas bara i den här webbläsaren, så att kartan
+// kan starta nära dig direkt medan GPS:en letar. Raderas när du loggar ut.
+const LAST_CENTER_KEY = "pulse-last-center";
 const DEFAULT_ZOOM = 14;
 const ME_ZOOM = 15;
 
 let map = null;
 let mapReady = false;
 let meMarker = null;
+let userMovedMap = false; // du har själv dragit eller zoomat kartan
+let startedAtMe = false;  // true när kartan redan har flyttats till dig vid start
 let myAccuracy = null; // { lat, lng, meters } – ritas som en ring när kartan är klar
 const friendMarkers = new Map();
 
@@ -163,7 +168,7 @@ function initMap() {
     map = new maplibregl.Map({
       container: "map-canvas",
       style: MAP_STYLE_URL,
-      center: [DEFAULT_CENTER.lng, DEFAULT_CENTER.lat],
+      center: (c => [c.lng, c.lat])(readLastCenter() || DEFAULT_CENTER),
       zoom: DEFAULT_ZOOM,
       maxPitch: 0,
       dragRotate: false,
@@ -183,6 +188,10 @@ function initMap() {
 
   // Bara vridning med två fingrar stängs av, zoom med två fingrar fungerar som vanligt.
   map.touchZoomRotate.disableRotation();
+
+  // Bara riktiga fingerrörelser räknas (originalEvent), inte när appen själv flyttar kartan.
+  map.on("dragstart", () => { userMovedMap = true; });
+  map.on("zoomstart", event => { if (event.originalEvent) userMovedMap = true; });
 
   map.on("load", () => {
     mapReady = true;
@@ -227,6 +236,7 @@ function showLocationCard(title, text, showPrivacyNote = true) {
 // fly = true flyttar kartan till dig. Automatiska uppdateringar (location.js) flyttar bara pricken.
 function showMe(lat, lng, accuracy, fly = true) {
   myAccuracy = { lat, lng, meters: accuracy };
+  saveLastCenter(lat, lng);
   if (!map) return;
 
   if (!meMarker) {
@@ -241,6 +251,51 @@ function showMe(lat, lng, accuracy, fly = true) {
 
   // Lite förskjutning uppåt så att pricken inte hamnar bakom positionskortet.
   if (fly) map.flyTo({ center: [lng, lat], zoom: ME_ZOOM, offset: [0, -80] });
+}
+
+function readLastCenter() {
+  try {
+    const c = JSON.parse(localStorage.getItem(LAST_CENTER_KEY));
+    if (c && Number.isFinite(c.lat) && Number.isFinite(c.lng)) return c;
+  } catch (e) {
+    // Privat läge eller blockerad lagring: starta i Stockholm.
+  }
+  return null;
+}
+
+function saveLastCenter(lat, lng) {
+  try {
+    localStorage.setItem(LAST_CENTER_KEY, JSON.stringify({ lat: Math.round(lat * 1000) / 1000, lng: Math.round(lng * 1000) / 1000 }));
+  } catch (e) {}
+}
+
+function forgetLastCenter() {
+  try { localStorage.removeItem(LAST_CENTER_KEY); } catch (e) {}
+}
+
+// När appen öppnas: hämta din position direkt och visa kartan där du är.
+// Har du nekat platsåtkomst frågar appen inte igen, utan stannar där den var.
+async function locateOnStart() {
+  if (!map || !("geolocation" in navigator) || !window.isSecureContext) return;
+  try {
+    if (navigator.permissions) {
+      const state = (await navigator.permissions.query({ name: "geolocation" })).state;
+      if (state === "denied") return;
+    }
+  } catch (e) {
+    // Äldre Safari saknar permissions-frågan. Då frågar vi som vanligt.
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      // Har du hunnit flytta kartan själv, eller trycka på positionsknappen, rör vi den inte.
+      const { latitude, longitude, accuracy } = pos.coords;
+      showMe(latitude, longitude, accuracy, false);
+      if (!startedAtMe && !userMovedMap) map.jumpTo({ center: [longitude, latitude], zoom: ME_ZOOM });
+      startedAtMe = true;
+    },
+    () => {},
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+  );
 }
 
 function locateMe() {
@@ -259,6 +314,7 @@ function locateMe() {
 
   // Positionen hämtas först nu, när du själv har tryckt. Webbläsaren frågar om lov första gången.
   btn.classList.add("loading");
+  startedAtMe = true; // knappen flyttar kartan själv, startpositionen ska inte hoppa dit igen
   navigator.geolocation.getCurrentPosition(
     pos => {
       btn.classList.remove("loading");
@@ -298,6 +354,7 @@ document.getElementById("location-close").addEventListener("click", () => {
 });
 
 initMap();
+locateOnStart();
 
 // Gör appen installerbar (PWA). Misslyckas tyst om det inte stöds.
 if ("serviceWorker" in navigator) {
