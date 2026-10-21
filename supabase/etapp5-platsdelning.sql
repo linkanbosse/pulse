@@ -138,7 +138,7 @@ begin
   v_ghost := coalesce(v_ghost, false);
   v_paused := coalesce(v_until > now(), false);
   select greatest(0, floor(extract(epoch from now() - updated_at)))::integer into v_age
-  from public.locations where user_id = v_me;
+  from public.locations where user_id = v_me and updated_at > now() - interval '24 hours';
 
   return jsonb_build_object(
     'ghost', v_ghost,
@@ -362,7 +362,25 @@ as $$
   order by lower(p.display_name), p.id;
 $$;
 
--- 6. Behörigheter för funktionerna: bara inloggade --------------------------------------------------
+-- 6. Automatisk städning var 10:e minut (pg_cron, ingår gratis i Supabase) -----------------------
+-- Raderar positioner äldre än 24 timmar även när ingen använder appen.
+-- Om pg_cron inte går att slå på hoppas steget över (med ett meddelande); resten av filen fungerar ändå,
+-- och städningen sker då varje gång någon skickar en position.
+do $cron$
+begin
+  create extension if not exists pg_cron;
+  perform cron.unschedule(jobid) from cron.job where jobname = 'pulse-locations-24h';
+  perform cron.schedule(
+    'pulse-locations-24h',
+    '*/10 * * * *',
+    $job$delete from public.locations where updated_at < now() - interval '24 hours'$job$
+  );
+exception when others then
+  raise notice 'pg_cron kunde inte slås på (%). Städningen sker i stället när positioner skickas.', sqlerrm;
+end;
+$cron$;
+
+-- 7. Behörigheter för funktionerna: bara inloggade --------------------------------------------------
 
 revoke execute on function public.get_my_location_settings() from public, anon;
 revoke execute on function public.set_location_viewer(uuid, boolean) from public, anon;

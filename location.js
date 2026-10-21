@@ -26,6 +26,7 @@ let lastFix = null;             // senaste GPS-svaret { lat, lng, accuracy, time
 let lastSent = null;            // senast skickade { lat, lng, at }
 let lastSendResult = null;      // "saved", "error" m.m.
 let sending = false;
+let sendPromise = null;         // pågående update_my_location, så att utloggning kan vänta in den
 let geoDenied = false;
 let locatedOnce = false;        // kartan flyttas till dig bara första gången
 
@@ -304,12 +305,15 @@ async function maybeSend(force) {
 
   sending = true;
   const fix = lastFix;
-  const { data, error } = await sb.rpc("update_my_location", {
+  sendPromise = sb.rpc("update_my_location", {
     p_lat: fix.lat,
     p_lng: fix.lng,
     p_accuracy: Math.round(fix.accuracy),
   });
+  const { data, error } = await sendPromise;
+  sendPromise = null;
   sending = false;
+  if (!locSettings) return; // utloggad medan positionen skickades
 
   if (error) {
     lastSendResult = "error";
@@ -391,13 +395,21 @@ function startNow() {
 
 // Anropas av account.js innan utloggning, så att ingen gammal position ligger kvar.
 async function clearLocationBeforeLogout() {
+  // Stoppa allt som kan skicka en ny position under utloggningen.
   stopWatch();
+  locLoadId++;
+  clearInterval(pollTimer);
+  clearTimeout(pauseTimer);
+  locSettings = null;
+  lastFix = null;
   if (!sb || !locUser) return;
+  const clear = (async () => {
+    // Ett skick som redan är på väg måste bli klart först, annars kan det återskapa positionen.
+    if (sendPromise) await Promise.resolve(sendPromise).catch(() => {});
+    await sb.rpc("clear_my_location");
+  })();
   // Utan internet ska utloggningen ändå fungera, därför högst 3 sekunders väntan.
-  await Promise.race([
-    sb.rpc("clear_my_location"),
-    new Promise(resolve => setTimeout(resolve, 3000)),
-  ]);
+  await Promise.race([clear.catch(() => {}), new Promise(resolve => setTimeout(resolve, 3000))]);
 }
 
 // ---------- Start ----------
