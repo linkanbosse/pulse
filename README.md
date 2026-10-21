@@ -2,10 +2,10 @@
 
 PULSE är en gratis social kartapp där du kan se var dina vänner är, men bara när de själva har valt att dela sin position.
 
-> Status: etapp 1 (prototyp). Appen är en webbapp (PWA) som kan installeras på hemskärmen.
+> Status: etapp 2 (prototyp med riktig karta). Appen är en webbapp (PWA) som kan installeras på hemskärmen.
 >
-> - Fungerar på riktigt: navigering, knappen "min position" (mobilens GPS, sparas inte), installation på hemskärmen.
-> - Testdata: kartan är en ritad exempelkarta och alla vänner är påhittade.
+> - Fungerar på riktigt: kartan (OpenStreetMap-data via OpenFreeMap), knappen "min position" (mobilens GPS, sparas inte), navigering, installation på hemskärmen.
+> - Testdata: alla vänner och deras positioner är påhittade. När du visar din position flyttas testvännerna runt dig.
 
 ## Filer
 
@@ -17,6 +17,7 @@ PULSE är en gratis social kartapp där du kan se var dina vänner är, men bara
 | `manifest.json` | Gör att appen kan installeras på hemskärmen |
 | `sw.js` | Service worker som gör appen installerbar och laddar om senaste versionen |
 | `icons/` | Appikoner |
+| `vendor/maplibre-gl/` | Kartbiblioteket MapLibre GL JS 5.24.0 (BSD-3-licens, se `LICENSE.txt`). Ändra inte de här filerna. |
 
 ## Vad appen ska kunna
 
@@ -51,6 +52,10 @@ Kärnfunktionerna ska alltid vara gratis.
 | 7 | Testning |
 | 8 | Publicering |
 
-## Teknik (planerad)
+## Teknik
 
-Projektet byggs helt från mobilen och med 0 kr i budget. Planen är att använda gratisnivåer av verktyg som Expo Snack (React Native), Supabase och öppen kartdata. Valet bekräftas i varje etapp.
+Projektet byggs helt från mobilen och med 0 kr i budget.
+
+- Webbapp (PWA) i ren HTML, CSS och JavaScript, publicerad gratis med GitHub Pages.
+- Karta: [MapLibre GL JS](https://maplibre.org/) ritar kartan och [OpenFreeMap](https://openfreemap.org/) levererar kartdata från OpenStreetMap. OpenFreeMap är gratis, kräver inget konto eller API-nyckel och tillåter kommersiell användning. Källhänvisningen nere till vänster på kartan krävs och får inte tas bort.
+- Planerat: Supabase (gratisnivå) för konton och platsdelning från etapp 3.

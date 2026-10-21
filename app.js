@@ -1,15 +1,31 @@
-// PULSE – etapp 1 (prototyp)
+// PULSE – etapp 2 (riktig karta)
 // VIKTIGT: allt i TEST_FRIENDS är påhittad testdata. Inga riktiga personer eller positioner.
+// Kartan är äkta: MapLibre GL JS (ritar kartan) + OpenFreeMap (gratis kartdata från OpenStreetMap).
 
+// Testvännernas plats anges som en förskjutning (i grader) från en mittpunkt.
+// Innan du har visat din position är mittpunkten Stockholm; efteråt flyttas testvännerna runt dig.
 const TEST_FRIENDS = [
-  { name: "Alva",  status: "🎉 Vill hitta på något", minutesAgo: 1,  x: 28, y: 30, c1: "#ff7a59", c2: "#ff4fd8", sharing: true },
-  { name: "Noah",  status: "🏠 Hemma",               minutesAgo: 12, x: 72, y: 38, c1: "#3ee08f", c2: "#2bb5ff", sharing: true },
-  { name: "Elsa",  status: "🌆 Ute",                 minutesAgo: 3,  x: 40, y: 72, c1: "#ffcc4d", c2: "#ff7a59", sharing: true },
-  { name: "Liam",  status: "😴 Pausad delning",      minutesAgo: null, x: 0, y: 0, c1: "#7c5cff", c2: "#2bb5ff", sharing: false },
+  { name: "Alva",  status: "🎉 Vill hitta på något", minutesAgo: 1,  dLat:  0.0012, dLng: -0.0024, c1: "#ff7a59", c2: "#ff4fd8", sharing: true },
+  { name: "Noah",  status: "🏠 Hemma",               minutesAgo: 12, dLat:  0.0008, dLng:  0.0026, c1: "#3ee08f", c2: "#2bb5ff", sharing: true },
+  { name: "Elsa",  status: "🌆 Ute",                 minutesAgo: 3,  dLat: -0.0011, dLng:  0.0020, c1: "#ffcc4d", c2: "#ff7a59", sharing: true },
+  { name: "Liam",  status: "😴 Pausad delning",      minutesAgo: null, dLat: 0, dLng: 0, c1: "#7c5cff", c2: "#2bb5ff", sharing: false },
 ];
 
 // Positioner äldre än så här räknas inte som "live" (förbereder regeln från etapp 5).
 const LIVE_LIMIT_MINUTES = 5;
+
+// Kartinställningar. OpenFreeMap är gratis, utan konto och API-nyckel, och tillåter kommersiell användning.
+const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/dark";
+const DEFAULT_CENTER = { lat: 59.3293, lng: 18.0686 }; // Stockholm, används tills du själv visar din position
+const DEFAULT_ZOOM = 14;
+const ME_ZOOM = 15;
+
+let map = null;
+let mapReady = false;
+let anchor = DEFAULT_CENTER;
+let meMarker = null;
+let myAccuracy = null; // { lat, lng, meters } – ritas som en ring när kartan är klar
+const friendMarkers = new Map();
 
 function initials(name) {
   return name.slice(0, 1).toUpperCase();
@@ -23,6 +39,10 @@ function timeText(friend) {
   return `Senast ${friend.minutesAgo} min sedan`;
 }
 
+function friendPosition(friend) {
+  return { lat: anchor.lat + friend.dLat, lng: anchor.lng + friend.dLng };
+}
+
 function createAvatar(friend) {
   const el = document.createElement("div");
   el.className = "avatar";
@@ -32,33 +52,161 @@ function createAvatar(friend) {
   return el;
 }
 
+function showFriendCard(friend) {
+  showLocationCard(`${friend.name} (testdata)`, `${friend.status} · ${timeText(friend)}. Påhittad person och plats.`, false);
+}
+
+// ---------- Karta ----------
+
+function showMapError(text) {
+  const box = document.getElementById("map-error");
+  box.textContent = text;
+  box.hidden = false;
+}
+
+// Ger kartan PULSE-färger (lila-blå ton) i stället för OpenFreeMaps neutralt grå mörka stil.
+function tintMap() {
+  const paint = [
+    ["background", "background-color", "#0b0b14"],
+    ["water", "fill-color", "#132233"],
+    ["waterway", "line-color", "#132233"],
+    ["landuse_park", "fill-color", "#14261d"],
+    ["landcover_wood", "fill-color", "#14261d"],
+    ["building", "fill-color", "#121220"],
+    ["building", "fill-outline-color", "#1c1c2e"],
+    ["highway_path", "line-color", "#1f1f33"],
+    ["highway_minor", "line-color", "#1a1a2b"],
+    ["highway_major_casing", "line-color", "#2a2a44"],
+    ["highway_major_inner", "line-color", "#22223a"],
+    ["highway_major_subtle", "line-color", "#22223a"],
+    ["highway_motorway_casing", "line-color", "#3a3366"],
+    ["highway_motorway_inner", "line-color", "#2b2650"],
+    ["highway_motorway_subtle", "line-color", "#2b2650"],
+  ];
+  paint.forEach(([layer, prop, value]) => {
+    if (map.getLayer(layer)) map.setPaintProperty(layer, prop, value);
+  });
+  // Lite ljusare text så att gatunamn och orter går att läsa på mobilen.
+  map.getStyle().layers.forEach(layer => {
+    if (layer.type === "symbol" && layer.layout && layer.layout["text-field"]) {
+      map.setPaintProperty(layer.id, "text-color", "#8a8aa8");
+    }
+  });
+}
+
+// En cirkel (som polygon) runt din position som visar hur säker GPS:en är.
+function circlePolygon(lat, lng, meters) {
+  const points = [];
+  const dLat = meters / 111320;
+  const dLng = meters / (111320 * Math.cos(lat * Math.PI / 180));
+  for (let i = 0; i <= 64; i++) {
+    const a = (i / 64) * 2 * Math.PI;
+    points.push([lng + dLng * Math.cos(a), lat + dLat * Math.sin(a)]);
+  }
+  return { type: "Feature", geometry: { type: "Polygon", coordinates: [points] }, properties: {} };
+}
+
+function drawAccuracy() {
+  if (!mapReady || !myAccuracy) return;
+  const data = circlePolygon(myAccuracy.lat, myAccuracy.lng, myAccuracy.meters);
+  const source = map.getSource("me-accuracy");
+  if (source) {
+    source.setData(data);
+    return;
+  }
+  map.addSource("me-accuracy", { type: "geojson", data });
+  map.addLayer({ id: "me-accuracy-fill", type: "fill", source: "me-accuracy", paint: { "fill-color": "#4da3ff", "fill-opacity": 0.12 } });
+  map.addLayer({ id: "me-accuracy-line", type: "line", source: "me-accuracy", paint: { "line-color": "#4da3ff", "line-opacity": 0.5, "line-width": 1.5 } });
+}
+
 function renderMapFriends() {
-  const layer = document.getElementById("map-friends");
   TEST_FRIENDS.filter(f => f.sharing).forEach((friend, i) => {
+    const pos = friendPosition(friend);
+    if (friendMarkers.has(friend.name)) {
+      friendMarkers.get(friend.name).setLngLat([pos.lng, pos.lat]);
+      return;
+    }
+
+    // MapLibre flyttar det yttre elementet; animationen ligger på knappen inuti.
+    const wrap = document.createElement("div");
     const btn = document.createElement("button");
     btn.className = "map-friend";
-    btn.style.left = friend.x + "%";
-    btn.style.top = friend.y + "%";
     btn.style.animationDelay = i * 0.08 + "s";
     btn.setAttribute("aria-label", `${friend.name} (testdata)`);
     btn.appendChild(createAvatar(friend));
 
     const label = document.createElement("span");
     label.className = "label";
-    label.textContent = friend.name;
+    label.textContent = friend.name + " · test";
     btn.appendChild(label);
 
-    btn.addEventListener("click", () => showView("friends"));
-    layer.appendChild(btn);
+    btn.addEventListener("click", event => {
+      event.stopPropagation();
+      showFriendCard(friend);
+    });
+    wrap.appendChild(btn);
+
+    const marker = new maplibregl.Marker({ element: wrap, anchor: "bottom" })
+      .setLngLat([pos.lng, pos.lat])
+      .addTo(map);
+    friendMarkers.set(friend.name, marker);
   });
 }
+
+function initMap() {
+  if (typeof maplibregl === "undefined") {
+    showMapError("Kartan kunde inte laddas. Kontrollera internet och ladda om sidan.");
+    return;
+  }
+  try {
+    map = new maplibregl.Map({
+      container: "map-canvas",
+      style: MAP_STYLE_URL,
+      center: [DEFAULT_CENTER.lng, DEFAULT_CENTER.lat],
+      zoom: DEFAULT_ZOOM,
+      maxPitch: 0,
+      dragRotate: false,
+      pitchWithRotate: false,
+      attributionControl: false,
+      locale: {
+        "AttributionControl.ToggleAttribution": "Visa kartans källor",
+      },
+    });
+  } catch (e) {
+    showMapError("Din webbläsare kan inte visa kartan (WebGL saknas eller är avstängt).");
+    return;
+  }
+
+  // Källhänvisningen krävs av OpenStreetMap/OpenFreeMap. Nere till vänster så att den inte krockar med positionsknappen.
+  map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-left");
+
+  // Bara vridning med två fingrar stängs av, zoom med två fingrar fungerar som vanligt.
+  map.touchZoomRotate.disableRotation();
+
+  map.on("load", () => {
+    mapReady = true;
+    tintMap();
+    drawAccuracy();
+  });
+
+  map.on("error", () => {
+    // Fel innan kartan hunnit laddas betyder oftast att mobilen saknar internet.
+    if (!mapReady) showMapError("Kartan kunde inte hämtas just nu. Kontrollera internet och ladda om sidan.");
+  });
+
+  renderMapFriends();
+}
+
+// ---------- Vänlista ----------
 
 function renderFriendList() {
   const list = document.getElementById("friend-list");
   TEST_FRIENDS.forEach(friend => {
     const li = document.createElement("li");
-    li.className = "friend";
-    li.appendChild(createAvatar(friend));
+    // Vänner som delar sin plats går att trycka på för att visa dem på kartan.
+    const row = document.createElement(friend.sharing ? "button" : "div");
+    row.className = "friend";
+    row.appendChild(createAvatar(friend));
 
     const info = document.createElement("div");
     info.className = "friend-info";
@@ -74,7 +222,19 @@ function renderFriendList() {
     time.className = "friend-time" + (friend.sharing ? "" : " paused");
     time.textContent = timeText(friend);
 
-    li.append(info, time);
+    row.append(info, time);
+    if (friend.sharing) {
+      row.setAttribute("aria-label", `Visa ${friend.name} på kartan (testdata)`);
+      row.addEventListener("click", () => {
+        showView("map");
+        if (map) {
+          const pos = friendPosition(friend);
+          map.flyTo({ center: [pos.lng, pos.lat], zoom: ME_ZOOM, offset: [0, -80] });
+        }
+        showFriendCard(friend);
+      });
+    }
+    li.appendChild(row);
     list.appendChild(li);
   });
 }
@@ -85,23 +245,41 @@ function showView(name) {
   document.querySelectorAll(".nav-btn").forEach(b => {
     b.classList.toggle("active", b.dataset.view === name);
   });
+  // Kartan var dold medan en annan flik visades och behöver mäta om sin storlek.
+  if (name === "map" && map) map.resize();
 }
 
-// Min position – detta är ÄKTA: den använder mobilens GPS via webbläsaren.
-function showLocationCard(title, text) {
+// ---------- Min position (ÄKTA: mobilens GPS via webbläsaren) ----------
+
+function showLocationCard(title, text, showPrivacyNote = true) {
   document.getElementById("location-title").textContent = title;
+  document.getElementById("location-fine").hidden = !showPrivacyNote;
   document.getElementById("location-text").textContent = text;
   document.getElementById("location-card").hidden = false;
   // Läses upp av skärmläsare, eftersom själva kortet var dolt innan.
   document.getElementById("location-status").textContent = title + ". " + text;
 }
 
-function showMeDot() {
-  if (document.querySelector(".me-dot")) return;
-  const dot = document.createElement("div");
-  dot.className = "me-dot";
-  dot.setAttribute("aria-label", "Du");
-  document.getElementById("map").appendChild(dot);
+function showMe(lat, lng, accuracy) {
+  myAccuracy = { lat, lng, meters: accuracy };
+  if (!map) return;
+
+  if (!meMarker) {
+    const dot = document.createElement("div");
+    dot.className = "me-dot";
+    dot.setAttribute("aria-label", "Du");
+    meMarker = new maplibregl.Marker({ element: dot }).setLngLat([lng, lat]).addTo(map);
+  } else {
+    meMarker.setLngLat([lng, lat]);
+  }
+  drawAccuracy();
+
+  // Flytta testvännerna runt dig, så att du ser hur det kommer att se ut.
+  anchor = { lat, lng };
+  renderMapFriends();
+
+  // Lite förskjutning uppåt så att pricken inte hamnar bakom positionskortet.
+  map.flyTo({ center: [lng, lat], zoom: ME_ZOOM, offset: [0, -80] });
 }
 
 function locateMe() {
@@ -118,16 +296,18 @@ function locateMe() {
     return;
   }
 
+  // Positionen hämtas först nu, när du själv har tryckt. Webbläsaren frågar om lov första gången.
   btn.classList.add("loading");
   navigator.geolocation.getCurrentPosition(
     pos => {
       btn.classList.remove("loading");
       const { latitude, longitude, accuracy } = pos.coords;
-      showMeDot();
+      const time = new Date(pos.timestamp).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+      showMe(latitude, longitude, accuracy);
       showLocationCard(
         "📍 Din position (äkta)",
-        `Lat ${latitude.toFixed(5)}, Long ${longitude.toFixed(5)} · ungefär ±${Math.round(accuracy)} m. ` +
-        "Pricken på kartan är bara en symbol tills den riktiga kartan kommer i etapp 2."
+        `Uppdaterad ${time} · ungefär ±${Math.round(accuracy)} m (blå ring). ` +
+        "Uppdateras inte av sig själv, tryck igen för en ny. Vännerna runt dig är påhittade testdata."
       );
     },
     err => {
@@ -151,7 +331,7 @@ document.getElementById("location-close").addEventListener("click", () => {
   document.getElementById("location-card").hidden = true;
 });
 
-renderMapFriends();
+initMap();
 renderFriendList();
 
 // Gör appen installerbar (PWA). Misslyckas tyst om det inte stöds.
