@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b14">
+  <meta name="description" content="PULSE – se dina vänner på kartan, bara när de själva vill.">
+  <title>PULSE</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PULSE">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <h1 class="logo">PULSE<span class="logo-dot"></span></h1>
+      <span class="badge" title="Allt med den här märkningen är påhittat">Prototyp</span>
+    </header>
+
+    <!-- Vy 1: Karta -->
+    <main id="view-map" class="view active" aria-label="Karta">
+      <div class="map" id="map">
+        <svg class="map-art" viewBox="0 0 400 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <rect width="400" height="700" fill="#10101c"/>
+          <path d="M-20 520 C 80 470, 140 560, 230 500 S 380 430, 430 470 L 430 720 L -20 720 Z" fill="#132233"/>
+          <ellipse cx="300" cy="170" rx="70" ry="45" fill="#14261d"/>
+          <ellipse cx="90" cy="330" rx="45" ry="60" fill="#14261d"/>
+          <g stroke="#1f1f33" stroke-width="14" fill="none" stroke-linecap="round">
+            <path d="M-10 120 L 410 200"/>
+            <path d="M-10 420 L 410 360"/>
+            <path d="M120 -10 L 170 710"/>
+            <path d="M300 -10 L 260 710"/>
+          </g>
+          <g stroke="#191929" stroke-width="6" fill="none" stroke-linecap="round">
+            <path d="M-10 270 L 410 280"/>
+            <path d="M-10 610 L 410 580"/>
+            <path d="M40 -10 L 60 710"/>
+            <path d="M210 -10 L 220 710"/>
+            <path d="M370 -10 L 350 710"/>
+          </g>
+        </svg>
+
+        <div class="map-note">Exempelkarta och testpersoner · riktig karta i etapp 2</div>
+
+        <!-- Vänner på kartan fylls i av app.js (testdata) -->
+        <div id="map-friends"></div>
+
+        <button id="locate-btn" class="locate-btn" aria-label="Visa min position">
+          <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" fill="currentColor"/>
+            <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 1v4M12 19v4M1 12h4M19 12h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <div id="location-card" class="location-card" hidden>
+          <div class="location-head">
+            <strong id="location-title">Din position</strong>
+            <button id="location-close" class="icon-btn" aria-label="Stäng">✕</button>
+          </div>
+          <p id="location-text"></p>
+          <p class="fine">Positionen visas bara här på din mobil. Den sparas inte och skickas inte till någon.</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Vy 2: Vänner -->
+    <main id="view-friends" class="view" aria-label="Vänner">
+      <div class="page">
+        <h2>Vänner</h2>
+        <div class="test-banner">⚠️ Testdata: personerna nedan är påhittade. Riktiga vänner kommer i etapp 4.</div>
+        <ul id="friend-list" class="friend-list"></ul>
+      </div>
+    </main>
+
+    <!-- Vy 3: Profil -->
+    <main id="view-profile" class="view" aria-label="Profil">
+      <div class="page">
+        <h2>Profil</h2>
+        <div class="profile-card">
+          <div class="avatar big" style="--c1:#7c5cff;--c2:#ff4fd8">Du</div>
+          <p class="muted">Inloggning och profil kommer i etapp 3.</p>
+        </div>
+        <div class="settings">
+          <div class="setting">
+            <div>
+              <strong>Platsdelning</strong>
+              <p class="muted">Avstängd. Ingen kan se var du är.</p>
+            </div>
+            <span class="pill off">Av</span>
+          </div>
+          <div class="setting">
+            <div>
+              <strong>Osynligt läge</strong>
+              <p class="muted">Kommer i etapp 5.</p>
+            </div>
+            <span class="pill">Snart</span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Huvudmeny">
+      <button class="nav-btn active" data-view="map">
+        <span class="nav-icon">🗺️</span><span>Karta</span>
+      </button>
+      <button class="nav-btn" data-view="friends">
+        <span class="nav-icon">👥</span><span>Vänner</span>
+      </button>
+      <button class="nav-btn" data-view="profile">
+        <span class="nav-icon">🙂</span><span>Profil</span>
+      </button>
+    </nav>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
