@@ -1,7 +1,7 @@
 // Enkel service worker: hämtar alltid senaste versionen från nätet först,
 // och använder sparad kopia bara om mobilen är offline.
 const CACHE_PREFIX = "pulse-";
-const CACHE = CACHE_PREFIX + "v7";
+const CACHE = CACHE_PREFIX + "v6";
 
 // Appens grundfiler sparas direkt vid installation, så att den kan öppnas offline.
 const APP_SHELL = [
@@ -11,7 +11,6 @@ const APP_SHELL = [
   "app.js",
   "account.js",
   "friends.js",
-  "location.js",
   "config.js",
   "manifest.json",
   "vendor/maplibre-gl/maplibre-gl.js",

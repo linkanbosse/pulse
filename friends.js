@@ -1,4 +1,4 @@
-// PULSE – etapp 4: vänner (Supabase). Platsdelning med vännerna finns i location.js (etapp 5).
+// PULSE – etapp 4: vänner (Supabase)
 // ÄKTA: vänkod, vänförfrågningar, acceptera/avvisa, ångra, ta bort vän, blockera och häva blockering.
 // Allt går via databasfunktionerna i supabase/etapp4-vanner.sql. Appen kan inte läsa vän-tabellerna direkt.
 // Använder sb, $, showMsg, setBusy, paintAvatar, dbErrorText och appUrl från account.js.
@@ -116,8 +116,6 @@ async function friendAction(btn, fn, params, { confirmText, busyText = "Vänta�
     showMsg("friends-msg", okText || "", "ok");
   }
   loadFriends();
-  // Borttagen eller blockerad vän ska försvinna från kartan direkt (location.js).
-  if (typeof loadSharing === "function") loadSharing();
 }
 
 function blockAction(person) {

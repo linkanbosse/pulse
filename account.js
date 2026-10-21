@@ -327,8 +327,6 @@ async function submitNewPassword(event) {
 async function logout() {
   const btn = $("logout-btn");
   setBusy(btn, true, "Loggar ut…");
-  // Radera din sparade position först (location.js), så att vännerna inte ser en gammal.
-  if (typeof clearLocationBeforeLogout === "function") await clearLocationBeforeLogout();
   // "local" loggar ut den här mobilen även utan internet.
   await sb.auth.signOut({ scope: "local" });
   setBusy(btn, false);

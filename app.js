@@ -1,9 +1,18 @@
-// PULSE – karta (etapp 2) och vänner på kartan (etapp 5).
+// PULSE – karta (etapp 2). Riktiga vänner finns i friends.js (etapp 4).
+// VIKTIGT: allt i TEST_FRIENDS är påhittad testdata som bara visas på kartan, tills platsdelning kommer i etapp 5.
 // Kartan är äkta: MapLibre GL JS (ritar kartan) + OpenFreeMap (gratis kartdata från OpenStreetMap).
-// Vännerna på kartan är riktiga: location.js hämtar dem från Supabase och anropar renderFriendMarkers().
 
-// En position räknas som "live" bara om den är högst så här gammal. Äldre visas gråa med tid.
-const LIVE_LIMIT_SECONDS = 120;
+// Testvännernas plats anges som en förskjutning (i grader) från en mittpunkt.
+// Innan du har visat din position är mittpunkten Stockholm; efteråt flyttas testvännerna runt dig.
+const TEST_FRIENDS = [
+  { name: "Alva",  status: "🎉 Vill hitta på något", minutesAgo: 1,  dLat:  0.0012, dLng: -0.0024, c1: "#ff7a59", c2: "#ff4fd8", sharing: true },
+  { name: "Noah",  status: "🏠 Hemma",               minutesAgo: 12, dLat:  0.0008, dLng:  0.0026, c1: "#3ee08f", c2: "#2bb5ff", sharing: true },
+  { name: "Elsa",  status: "🌆 Ute",                 minutesAgo: 3,  dLat: -0.0011, dLng:  0.0020, c1: "#ffcc4d", c2: "#ff7a59", sharing: true },
+  { name: "Liam",  status: "😴 Pausad delning",      minutesAgo: null, dLat: 0, dLng: 0, c1: "#7c5cff", c2: "#2bb5ff", sharing: false },
+];
+
+// Positioner äldre än så här räknas inte som "live" (förbereder regeln från etapp 5).
+const LIVE_LIMIT_MINUTES = 5;
 
 // Kartinställningar. OpenFreeMap är gratis, utan konto och API-nyckel, och tillåter kommersiell användning.
 const MAP_STYLE_URL = "https://tiles.openfreemap.org/styles/dark";
@@ -13,34 +22,38 @@ const ME_ZOOM = 15;
 
 let map = null;
 let mapReady = false;
+let anchor = DEFAULT_CENTER;
 let meMarker = null;
 let myAccuracy = null; // { lat, lng, meters } – ritas som en ring när kartan är klar
 const friendMarkers = new Map();
 
-// "nyss", "4 min sedan", "2 h sedan". Sekunderna räknas av servern (se location.js).
-function ageText(seconds) {
-  if (seconds < 60) return "nyss";
-  if (seconds < 3600) return Math.floor(seconds / 60) + " min sedan";
-  return Math.floor(seconds / 3600) + " h sedan";
+function initials(name) {
+  return name.slice(0, 1).toUpperCase();
 }
 
-function clockText(secondsAgo) {
-  return new Date(Date.now() - secondsAgo * 1000).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+function timeText(friend) {
+  if (!friend.sharing) return "Delar inte";
+  if (friend.minutesAgo <= LIVE_LIMIT_MINUTES) {
+    return friend.minutesAgo <= 1 ? "Live · nyss" : `Live · ${friend.minutesAgo} min sedan`;
+  }
+  return `Senast ${friend.minutesAgo} min sedan`;
 }
 
-function friendTimeText(friend) {
-  if (friend.age_seconds <= LIVE_LIMIT_SECONDS) return "Live · " + ageText(friend.age_seconds);
-  return `Senast ${clockText(friend.age_seconds)} · ${ageText(friend.age_seconds)}`;
+function friendPosition(friend) {
+  return { lat: anchor.lat + friend.dLat, lng: anchor.lng + friend.dLng };
+}
+
+function createAvatar(friend) {
+  const el = document.createElement("div");
+  el.className = "avatar";
+  el.style.setProperty("--c1", friend.c1);
+  el.style.setProperty("--c2", friend.c2);
+  el.textContent = initials(friend.name);
+  return el;
 }
 
 function showFriendCard(friend) {
-  const live = friend.age_seconds <= LIVE_LIMIT_SECONDS;
-  showLocationCard(
-    (live ? "🟢 " : "⚪ ") + friend.display_name,
-    `${friendTimeText(friend)} · ungefär ±${Math.round(friend.accuracy_m)} m.` +
-    (live ? "" : " Det här är var hen var senast, inte var hen är nu."),
-    false
-  );
+  showLocationCard(`${friend.name} (testdata)`, `${friend.status} · ${timeText(friend)}. Påhittad person och plats.`, false);
 }
 
 // ---------- Karta ----------
@@ -106,51 +119,37 @@ function drawAccuracy() {
   map.addLayer({ id: "me-accuracy-line", type: "line", source: "me-accuracy", paint: { "line-color": "#4da3ff", "line-opacity": 0.5, "line-width": 1.5 } });
 }
 
-// Ritar vänner som delar sin position med dig. friends = rader från get_friend_locations med state "sharing".
-function renderFriendMarkers(friends) {
-  if (!map) return;
-  const seen = new Set();
-  friends.forEach((friend, i) => {
-    seen.add(friend.user_id);
-    const live = friend.age_seconds <= LIVE_LIMIT_SECONDS;
-    let entry = friendMarkers.get(friend.user_id);
-
-    if (!entry) {
-      // MapLibre flyttar det yttre elementet; animationen ligger på knappen inuti.
-      const wrap = document.createElement("div");
-      const btn = document.createElement("button");
-      btn.className = "map-friend";
-      btn.style.animationDelay = i * 0.08 + "s";
-      const avatar = document.createElement("div");
-      avatar.className = "avatar";
-      const label = document.createElement("span");
-      label.className = "label";
-      btn.append(avatar, label);
-      btn.addEventListener("click", event => {
-        event.stopPropagation();
-        showFriendCard(entry.friend);
-      });
-      wrap.appendChild(btn);
-      const marker = new maplibregl.Marker({ element: wrap, anchor: "bottom" })
-        .setLngLat([friend.lng, friend.lat])
-        .addTo(map);
-      entry = { marker, btn, avatar, label, friend };
-      friendMarkers.set(friend.user_id, entry);
+function renderMapFriends() {
+  TEST_FRIENDS.filter(f => f.sharing).forEach((friend, i) => {
+    const pos = friendPosition(friend);
+    if (friendMarkers.has(friend.name)) {
+      friendMarkers.get(friend.name).setLngLat([pos.lng, pos.lat]);
+      return;
     }
 
-    entry.friend = friend;
-    entry.marker.setLngLat([friend.lng, friend.lat]);
-    paintAvatar(entry.avatar, friend.display_name, friend.avatar_color);
-    entry.btn.classList.toggle("stale", !live);
-    entry.btn.setAttribute("aria-label", `${friend.display_name}, ${friendTimeText(friend)}`);
-    entry.label.textContent = friend.display_name + (live ? "" : " · " + ageText(friend.age_seconds));
-  });
+    // MapLibre flyttar det yttre elementet; animationen ligger på knappen inuti.
+    const wrap = document.createElement("div");
+    const btn = document.createElement("button");
+    btn.className = "map-friend";
+    btn.style.animationDelay = i * 0.08 + "s";
+    btn.setAttribute("aria-label", `${friend.name} (testdata)`);
+    btn.appendChild(createAvatar(friend));
 
-  friendMarkers.forEach((entry, id) => {
-    if (!seen.has(id)) {
-      entry.marker.remove();
-      friendMarkers.delete(id);
-    }
+    const label = document.createElement("span");
+    label.className = "label";
+    label.textContent = friend.name + " · test";
+    btn.appendChild(label);
+
+    btn.addEventListener("click", event => {
+      event.stopPropagation();
+      showFriendCard(friend);
+    });
+    wrap.appendChild(btn);
+
+    const marker = new maplibregl.Marker({ element: wrap, anchor: "bottom" })
+      .setLngLat([pos.lng, pos.lat])
+      .addTo(map);
+    friendMarkers.set(friend.name, marker);
   });
 }
 
@@ -201,6 +200,8 @@ function initMap() {
       showMapError("Kartbilderna kunde inte hämtas. Kontrollera internet, eller stäng av annonsblockerare för sidan, och ladda om.");
     }
   });
+
+  renderMapFriends();
 }
 
 function showView(name) {
@@ -224,8 +225,7 @@ function showLocationCard(title, text, showPrivacyNote = true) {
   document.getElementById("location-status").textContent = title + ". " + text;
 }
 
-// fly = true flyttar kartan till dig. Automatiska uppdateringar (location.js) flyttar bara pricken.
-function showMe(lat, lng, accuracy, fly = true) {
+function showMe(lat, lng, accuracy) {
   myAccuracy = { lat, lng, meters: accuracy };
   if (!map) return;
 
@@ -239,8 +239,12 @@ function showMe(lat, lng, accuracy, fly = true) {
   }
   drawAccuracy();
 
+  // Flytta testvännerna runt dig, så att du ser hur det kommer att se ut.
+  anchor = { lat, lng };
+  renderMapFriends();
+
   // Lite förskjutning uppåt så att pricken inte hamnar bakom positionskortet.
-  if (fly) map.flyTo({ center: [lng, lat], zoom: ME_ZOOM, offset: [0, -80] });
+  map.flyTo({ center: [lng, lat], zoom: ME_ZOOM, offset: [0, -80] });
 }
 
 function locateMe() {
@@ -265,15 +269,10 @@ function locateMe() {
       const { latitude, longitude, accuracy } = pos.coords;
       const time = new Date(pos.timestamp).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
       showMe(latitude, longitude, accuracy);
-      // location.js skickar positionen till de vänner du har valt, om du delar (annars händer inget).
-      const shared = typeof onMyPosition === "function" ? onMyPosition(pos) : false;
       showLocationCard(
-        "📍 Din position",
+        "📍 Din position (äkta)",
         `Uppdaterad ${time} · ungefär ±${Math.round(accuracy)} m (blå ring). ` +
-        (shared
-          ? "Du delar din position, så den uppdateras av sig själv medan appen är öppen."
-          : "Uppdateras inte av sig själv, tryck igen för en ny."),
-        !shared
+        "Uppdateras inte av sig själv, tryck igen för en ny. Vännerna runt dig är påhittade testdata."
       );
     },
     err => {
