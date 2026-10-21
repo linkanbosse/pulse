@@ -30,7 +30,10 @@
 
         <div id="map-error" class="map-error" hidden></div>
 
-        <div class="map-note">Riktig karta · personerna på kartan är testdata</div>
+        <!-- Visar om du delar din position just nu. location.js fyller i texten. Tryck = inställningar. -->
+        <button id="share-chip" class="share-chip" type="button" hidden>
+          <span id="share-chip-dot" class="chip-dot"></span><span id="share-chip-text"></span>
+        </button>
 
         <button id="locate-btn" class="locate-btn" aria-label="Visa min position">
           <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
@@ -121,7 +124,7 @@
             <ul id="blocked-list" class="friend-list"></ul>
           </details>
 
-          <p class="muted fine-print">Platsdelning med vänner kommer i etapp 5. Än så länge ser ingen var du är.</p>
+          <p class="muted fine-print">Vem som får se din position väljer du under Profil → Platsdelning.</p>
         </div>
       </div>
     </main>
@@ -207,22 +210,63 @@
           </div>
         </div>
 
-        <div class="settings">
-          <div class="setting">
-            <div>
-              <strong>Platsdelning</strong>
-              <p class="muted">Avstängd. Ingen kan se var du är.</p>
-            </div>
-            <span class="pill off">Av</span>
+        <!-- Platsdelning (etapp 5). location.js visar en av rutorna nedan. -->
+        <section id="sharing" class="sharing" aria-label="Platsdelning">
+          <h3 class="section-title">Platsdelning</h3>
+
+          <div id="sharing-off" class="account-box">
+            <p id="sharing-off-text" class="muted">Logga in för att dela din position med vänner. Ingen kan se var du är.</p>
           </div>
-          <div class="setting">
-            <div>
-              <strong>Osynligt läge</strong>
-              <p class="muted">Kommer i etapp 5.</p>
+
+          <div id="sharing-box" hidden>
+            <div class="account-box">
+              <div class="sharing-status">
+                <span id="sharing-dot" class="chip-dot"></span>
+                <div>
+                  <strong id="sharing-title"></strong>
+                  <p id="sharing-text" class="muted"></p>
+                </div>
+              </div>
+              <button id="sharing-start" class="primary-btn" type="button" hidden>Börja dela nu</button>
             </div>
-            <span class="pill">Snart</span>
+
+            <p id="sharing-msg" class="msg" role="status" aria-live="polite" hidden></p>
+
+            <div class="account-box">
+              <strong>Vem får se dig?</strong>
+              <p class="muted">Bara vännerna du slår på här ser var du är. Ingen är vald från början.</p>
+              <ul id="viewer-list" class="viewer-list"></ul>
+              <p id="viewer-empty" class="muted" hidden>Du har inga vänner än. Lägg till vänner under Vänner.</p>
+            </div>
+
+            <div class="account-box">
+              <label class="switch-row">
+                <span>
+                  <strong>Osynligt läge</strong>
+                  <span class="muted">Ingen ser dig, inte ens de du har valt. De ser "delar inte", precis som om du aldrig delat.</span>
+                </span>
+                <input id="ghost-toggle" type="checkbox" class="switch">
+              </label>
+            </div>
+
+            <div class="account-box">
+              <strong>Pausa delningen</strong>
+              <p id="pause-text" class="muted">Vännerna du har valt ser att du har pausat, men inte var du är.</p>
+              <div id="pause-buttons" class="btn-row wrap">
+                <button type="button" class="secondary-btn" data-minutes="60">1 timme</button>
+                <button type="button" class="secondary-btn" data-minutes="480">8 timmar</button>
+                <button type="button" class="secondary-btn" data-minutes="forever">Tills vidare</button>
+              </div>
+              <button id="pause-resume" class="primary-btn" type="button" hidden>Starta delningen igen</button>
+            </div>
+
+            <details class="account-box info">
+              <summary><strong>Vad sparas, och när uppdateras positionen?</strong></summary>
+              <p class="muted">Bara din senaste position sparas (en rad, skrivs över varje gång). Ingen historik. Den raderas direkt när du pausar, blir osynlig eller slutar dela med alla, när du loggar ut, och automatiskt efter 24 timmar.</p>
+              <p class="muted">PULSE är en webbapp. Den kan bara skicka din position medan appen är öppen och skärmen är på. När du stänger appen, byter app eller låser mobilen slutar uppdateringarna, och vännerna ser då din senaste position som grå med tid ("Senast 14:32"), aldrig som live. På iPhone stoppas webbappar i bakgrunden direkt. På Android kan det fungera en kort stund. Riktig bakgrundsdelning kräver en riktig app (native) och kommer kanske senare.</p>
+            </details>
           </div>
-        </div>
+        </section>
       </div>
     </main>
 
@@ -246,5 +290,6 @@
   <script src="app.js"></script>
   <script src="account.js"></script>
   <script src="friends.js"></script>
+  <script src="location.js"></script>
 </body>
 </html>
