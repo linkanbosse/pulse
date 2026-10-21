@@ -197,8 +197,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .location-card {
   position: absolute;
   left: 16px;
-  right: 88px;
-  bottom: 16px;
+  right: 16px;
+  bottom: 92px;
+  max-height: 50%;
+  overflow-y: auto;
   background: var(--surface);
   border-radius: var(--radius);
   padding: 14px 16px;
@@ -210,6 +212,14 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .location-head { display: flex; justify-content: space-between; align-items: center; }
 .location-card p { margin: 8px 0 0; font-size: 14px; line-height: 1.4; }
 .location-card .fine { font-size: 11px; color: var(--muted); }
+
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
 
 .icon-btn {
   border: none;

@@ -92,6 +92,8 @@ function showLocationCard(title, text) {
   document.getElementById("location-title").textContent = title;
   document.getElementById("location-text").textContent = text;
   document.getElementById("location-card").hidden = false;
+  // Läses upp av skärmläsare, eftersom själva kortet var dolt innan.
+  document.getElementById("location-status").textContent = title + ". " + text;
 }
 
 function showMeDot() {
@@ -104,6 +106,8 @@ function showMeDot() {
 
 function locateMe() {
   const btn = document.getElementById("locate-btn");
+  // Ignorera nya tryck medan en sökning pågår, så att ett gammalt svar inte skriver över ett nytt.
+  if (btn.classList.contains("loading")) return;
 
   if (!("geolocation" in navigator)) {
     showLocationCard("Fungerar inte", "Din webbläsare kan inte hämta position.");
