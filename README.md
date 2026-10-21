@@ -2,7 +2,21 @@
 
 PULSE är en gratis social kartapp där du kan se var dina vänner är, men bara när de själva har valt att dela sin position.
 
-> Status: projektet har precis startat. Ingen funktion är byggd än.
+> Status: etapp 1 (prototyp). Appen är en webbapp (PWA) som kan installeras på hemskärmen.
+>
+> - Fungerar på riktigt: navigering, knappen "min position" (mobilens GPS, sparas inte), installation på hemskärmen.
+> - Testdata: kartan är en ritad exempelkarta och alla vänner är påhittade.
+
+## Filer
+
+| Fil | Vad den gör |
+|---|---|
+| `index.html` | Själva sidan: logga, karta, vänlista, profil och bottenmeny |
+| `style.css` | Utseendet (mörkt tema, färger, layout) |
+| `app.js` | Logiken: byta vy, testvänner, hämta din position |
+| `manifest.json` | Gör att appen kan installeras på hemskärmen |
+| `sw.js` | Service worker som gör appen installerbar och laddar om senaste versionen |
+| `icons/` | Appikoner |
 
 ## Vad appen ska kunna
 
