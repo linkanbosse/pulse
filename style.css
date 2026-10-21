@@ -402,6 +402,66 @@ button:disabled { opacity: .6; cursor: default; }
 
 .account-actions { display: grid; gap: 10px; margin-bottom: 14px; }
 
+/* Vänner (etapp 4) */
+.page-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.page-head h2 { margin: 0; }
+.page-head .icon-btn { width: 38px; height: 38px; font-size: 18px; }
+
+.code-card { justify-items: center; text-align: center; }
+.friend-code {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 34px;
+  letter-spacing: 4px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  user-select: all;
+}
+.btn-row { display: flex; gap: 10px; width: 100%; }
+.btn-row > * { flex: 1; }
+
+.friend-section { margin: 18px 0 0; }
+.section-title { margin: 0 0 10px; font-size: 16px; }
+.blocked summary { cursor: pointer; list-style-position: inside; }
+.blocked > .muted { margin: 0 0 10px; }
+.fine-print { margin-top: 18px; text-align: center; }
+#friends-msg { margin-bottom: 4px; }
+#friends-empty { margin: 0; padding: 4px 4px 0; }
+
+.person { background: var(--surface); border-radius: var(--radius); }
+.person .friend { background: none; }
+.person .icon-btn { width: 38px; height: 38px; font-size: 18px; flex-shrink: 0; }
+.friend-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 12px 12px 72px; }
+.small-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  background: var(--surface-2);
+}
+.small-btn.primary { color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.small-btn.danger { background: rgba(255, 90, 90, .12); color: #ff8080; }
+.small-btn:active { transform: scale(.96); }
+
+.nav-btn { position: relative; }
+.nav-badge {
+  position: absolute;
+  top: 8px;
+  left: calc(50% + 6px);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent-2);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+}
+
 /* Bottenmeny */
 .bottom-nav {
   position: absolute;

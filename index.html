@@ -30,7 +30,7 @@
 
         <div id="map-error" class="map-error" hidden></div>
 
-        <div class="map-note">Riktig karta · vännerna är testdata</div>
+        <div class="map-note">Riktig karta · personerna på kartan är testdata</div>
 
         <button id="locate-btn" class="locate-btn" aria-label="Visa min position">
           <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
@@ -53,12 +53,76 @@
       </div>
     </main>
 
-    <!-- Vy 2: Vänner -->
+    <!-- Vy 2: Vänner (etapp 4). friends.js visar en av rutorna nedan åt gången. -->
     <main id="view-friends" class="view" aria-label="Vänner">
       <div class="page">
-        <h2>Vänner</h2>
-        <div class="test-banner">⚠️ Testdata: personerna nedan är påhittade. Riktiga vänner kommer i etapp 4.</div>
-        <ul id="friend-list" class="friend-list"></ul>
+        <div class="page-head">
+          <h2>Vänner</h2>
+          <button id="friends-refresh" class="icon-btn" type="button" aria-label="Uppdatera" hidden>↻</button>
+        </div>
+
+        <div id="friends-loading" class="account-box"><p class="muted">Laddar vänner…</p></div>
+
+        <div id="friends-signed-out" class="account-box" hidden>
+          <strong>Logga in för att lägga till vänner</strong>
+          <p class="muted">Du behöver ett konto för att få en vänkod och skicka vänförfrågningar.</p>
+          <button id="friends-go-profile" class="primary-btn" type="button">Logga in under Profil</button>
+        </div>
+
+        <div id="friends-setup" class="account-box" hidden>
+          <strong>Vänner fungerar inte än</strong>
+          <p id="friends-setup-text" class="muted"></p>
+          <button id="friends-retry" class="secondary-btn" type="button">Försök igen</button>
+        </div>
+
+        <div id="friends-box" hidden>
+          <section class="account-box code-card" aria-label="Din vänkod">
+            <span class="muted">Din vänkod</span>
+            <strong id="my-friend-code" class="friend-code">····-····</strong>
+            <p class="muted">Ge koden bara till personer du vill bli vän med. Den som har koden kan skicka en förfrågan, men ni blir vänner först när du accepterar.</p>
+            <div class="btn-row">
+              <button id="code-copy" class="secondary-btn" type="button">Kopiera</button>
+              <button id="code-share" class="secondary-btn" type="button" hidden>Dela</button>
+            </div>
+            <button id="code-new" class="link-btn" type="button">Byt till en ny kod</button>
+          </section>
+
+          <form id="add-friend-form" class="account-box form">
+            <strong>Lägg till vän</strong>
+            <label class="field">
+              <span>Vännens kod</span>
+              <input id="add-friend-code" type="text" required maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="T.ex. K7QM-3XPA">
+            </label>
+            <button id="add-friend-submit" class="primary-btn" type="submit">Skicka förfrågan</button>
+            <p id="add-friend-msg" class="msg" role="status" aria-live="polite" hidden></p>
+          </form>
+
+          <p id="friends-msg" class="msg" role="status" aria-live="polite" hidden></p>
+
+          <section id="incoming-section" class="friend-section" hidden>
+            <h3 class="section-title">Förfrågningar till dig</h3>
+            <ul id="incoming-list" class="friend-list"></ul>
+          </section>
+
+          <section class="friend-section">
+            <h3 class="section-title">Dina vänner <span id="friends-count" class="muted"></span></h3>
+            <ul id="friends-list" class="friend-list"></ul>
+            <p id="friends-empty" class="muted">Inga vänner än. Dela din vänkod eller skriv in en väns kod ovan.</p>
+          </section>
+
+          <section id="outgoing-section" class="friend-section" hidden>
+            <h3 class="section-title">Skickade förfrågningar</h3>
+            <ul id="outgoing-list" class="friend-list"></ul>
+          </section>
+
+          <details id="blocked-section" class="friend-section blocked" hidden>
+            <summary class="section-title">Blockerade <span id="blocked-count" class="muted"></span></summary>
+            <p class="muted">De här personerna kan inte skicka förfrågningar till dig. De får inte veta att du har blockerat dem.</p>
+            <ul id="blocked-list" class="friend-list"></ul>
+          </details>
+
+          <p class="muted fine-print">Platsdelning med vänner kommer i etapp 5. Än så länge ser ingen var du är.</p>
+        </div>
       </div>
     </main>
 
@@ -168,6 +232,7 @@
       </button>
       <button class="nav-btn" data-view="friends">
         <span class="nav-icon">👥</span><span>Vänner</span>
+        <span id="friends-badge" class="nav-badge" hidden></span>
       </button>
       <button class="nav-btn" data-view="profile">
         <span class="nav-icon">🙂</span><span>Profil</span>
@@ -180,5 +245,6 @@
   <script src="config.js"></script>
   <script src="app.js"></script>
   <script src="account.js"></script>
+  <script src="friends.js"></script>
 </body>
 </html>
