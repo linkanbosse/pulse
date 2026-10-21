@@ -329,6 +329,8 @@ async function logout() {
   setBusy(btn, true, "Loggar ut…");
   // Radera din sparade position först (location.js), så att vännerna inte ser en gammal.
   if (typeof clearLocationBeforeLogout === "function") await clearLocationBeforeLogout();
+  // Glöm också var kartan senast visade dig (app.js).
+  if (typeof forgetLastCenter === "function") forgetLastCenter();
   // "local" loggar ut den här mobilen även utan internet.
   await sb.auth.signOut({ scope: "local" });
   setBusy(btn, false);
