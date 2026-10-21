@@ -56,6 +56,110 @@
       </div>
     </main>
 
+    <!-- Vy: Häng (etapp 6). social.js visar en av rutorna nedan. -->
+    <main id="view-hang" class="view" aria-label="Häng">
+      <div class="page">
+        <div class="page-head">
+          <h2>Häng</h2>
+          <button id="hang-refresh" class="icon-btn" type="button" aria-label="Uppdatera" hidden>↻</button>
+        </div>
+
+        <div id="hang-loading" class="account-box"><p class="muted">Laddar…</p></div>
+
+        <div id="hang-signed-out" class="account-box" hidden>
+          <strong>Logga in för att se vad vännerna hittar på</strong>
+          <p class="muted">Med ett konto kan du sätta en status och skapa aktiviteter som dina vänner kan gå med i.</p>
+          <button id="hang-go-profile" class="primary-btn" type="button">Logga in under Profil</button>
+        </div>
+
+        <div id="hang-setup" class="account-box" hidden>
+          <strong>Statusar och aktiviteter fungerar inte än</strong>
+          <p id="hang-setup-text" class="muted"></p>
+          <button id="hang-retry" class="secondary-btn" type="button">Försök igen</button>
+        </div>
+
+        <div id="hang-box" hidden>
+          <p id="hang-msg" class="msg" role="status" aria-live="polite" hidden></p>
+
+          <!-- Min status -->
+          <section class="account-box" aria-label="Din status">
+            <strong>Din status</strong>
+            <div id="my-status-current" class="status-current" hidden>
+              <span id="my-status-emoji" class="status-emoji" aria-hidden="true"></span>
+              <div class="status-current-text">
+                <strong id="my-status-label"></strong>
+                <span id="my-status-note" class="muted"></span>
+                <span id="my-status-expires" class="muted"></span>
+              </div>
+              <button id="status-clear" class="small-btn" type="button">Ta bort</button>
+            </div>
+            <p id="status-ghost-note" class="msg warn" hidden>Osynligt läge är på, så ingen vän ser din status just nu. Stäng av det under Profil → Platsdelning.</p>
+            <form id="status-form" class="form">
+              <div id="status-kinds" class="status-kinds" role="radiogroup" aria-label="Välj status">
+                <label class="status-kind"><input type="radio" name="status-kind" value="out"><span class="status-emoji" aria-hidden="true">🌆</span><span>Ute</span></label>
+                <label class="status-kind"><input type="radio" name="status-kind" value="home"><span class="status-emoji" aria-hidden="true">🏠</span><span>Hemma</span></label>
+                <label class="status-kind"><input type="radio" name="status-kind" value="up"><span class="status-emoji" aria-hidden="true">🙌</span><span>Vill hitta på något</span></label>
+              </div>
+              <label class="field">
+                <span>Kort text (valfritt)</span>
+                <input id="status-note" type="text" maxlength="40" autocomplete="off" placeholder="T.ex. Fika någon?">
+              </label>
+              <fieldset class="field">
+                <legend>Hur länge?</legend>
+                <div id="status-durations" class="chips">
+                  <label class="chip"><input type="radio" name="status-duration" value="60"><span>1 timme</span></label>
+                  <label class="chip"><input type="radio" name="status-duration" value="240" checked><span>4 timmar</span></label>
+                  <label class="chip"><input type="radio" name="status-duration" value="day"><span>Resten av dagen</span></label>
+                </div>
+              </fieldset>
+              <button id="status-save" class="primary-btn" type="submit">Visa för mina vänner</button>
+            </form>
+            <p class="muted">Alla dina vänner ser din status, men inte var du är. Den försvinner av sig själv när tiden har gått ut.</p>
+          </section>
+
+          <!-- Vännernas statusar -->
+          <section class="friend-section">
+            <h3 class="section-title">Vännernas statusar</h3>
+            <ul id="friend-status-list" class="friend-list"></ul>
+            <p id="friend-status-empty" class="muted">Ingen vän har en status just nu.</p>
+          </section>
+
+          <!-- Aktiviteter -->
+          <section class="friend-section">
+            <div class="section-head">
+              <h3 class="section-title">Aktiviteter</h3>
+              <button id="activity-new" class="small-btn primary" type="button">+ Skapa</button>
+            </div>
+
+            <form id="activity-form" class="account-box form" hidden>
+              <strong>Ny aktivitet</strong>
+              <label class="field">
+                <span>Vad ska ni göra?</span>
+                <input id="activity-title" type="text" required maxlength="60" autocomplete="off" placeholder="T.ex. Fika, bio, fotboll">
+              </label>
+              <label class="field">
+                <span>Var? (valfritt)</span>
+                <input id="activity-place" type="text" maxlength="60" autocomplete="off" placeholder="T.ex. Café Kanel">
+              </label>
+              <label class="field">
+                <span>När?</span>
+                <input id="activity-time" type="datetime-local" required>
+              </label>
+              <div class="btn-row">
+                <button id="activity-cancel-form" class="secondary-btn" type="button">Avbryt</button>
+                <button id="activity-submit" class="primary-btn" type="submit">Skapa</button>
+              </div>
+              <p class="muted">Alla dina vänner ser aktiviteten och kan gå med. Platsen är bara text, ingen position delas. Aktiviteten försvinner 6 timmar efter starttiden.</p>
+            </form>
+
+            <ul id="activity-list" class="activity-list"></ul>
+            <p id="activity-empty" class="muted">Inga aktiviteter just nu. Skapa en så ser dina vänner den här.</p>
+            <p class="muted fine-print">Går du med i en aktivitet ser alla som ser aktiviteten ditt namn, även personer du själv inte är vän med. Personer du har blockerat ser inte dig, och du ser inte dem.</p>
+          </section>
+        </div>
+      </div>
+    </main>
+
     <!-- Vy 2: Vänner (etapp 4). friends.js visar en av rutorna nedan åt gången. -->
     <main id="view-friends" class="view" aria-label="Vänner">
       <div class="page">
@@ -274,6 +378,10 @@
       <button class="nav-btn active" data-view="map">
         <span class="nav-icon">🗺️</span><span>Karta</span>
       </button>
+      <button class="nav-btn" data-view="hang">
+        <span class="nav-icon">🎉</span><span>Häng</span>
+        <span id="hang-badge" class="nav-badge" hidden></span>
+      </button>
       <button class="nav-btn" data-view="friends">
         <span class="nav-icon">👥</span><span>Vänner</span>
         <span id="friends-badge" class="nav-badge" hidden></span>
@@ -291,5 +399,6 @@
   <script src="account.js"></script>
   <script src="friends.js"></script>
   <script src="location.js"></script>
+  <script src="social.js"></script>
 </body>
 </html>

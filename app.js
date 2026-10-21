@@ -1,4 +1,4 @@
-// PULSE – karta (etapp 2) och vänner på kartan (etapp 5).
+// PULSE – karta (etapp 2), vänner på kartan (etapp 5) och deras status (etapp 6).
 // Kartan är äkta: MapLibre GL JS (ritar kartan) + OpenFreeMap (gratis kartdata från OpenStreetMap).
 // Vännerna på kartan är riktiga: location.js hämtar dem från Supabase och anropar renderFriendMarkers().
 
@@ -38,10 +38,17 @@ function friendTimeText(friend) {
   return `Senast ${clockText(friend.age_seconds)} · ${ageText(friend.age_seconds)}`;
 }
 
+// Vännens status från social.js (etapp 6), eller null.
+function statusOf(friend) {
+  return typeof friendStatusFor === "function" ? friendStatusFor(friend.user_id) : null;
+}
+
 function showFriendCard(friend) {
   const live = friend.age_seconds <= LIVE_LIMIT_SECONDS;
+  const status = statusOf(friend);
   showLocationCard(
     (live ? "🟢 " : "⚪ ") + friend.display_name,
+    (status ? `${status.emoji} ${status.label}${status.note ? ` · "${status.note}"` : ""}. ` : "") +
     `${friendTimeText(friend)} · ungefär ±${Math.round(friend.accuracy_m)} m.` +
     (live ? "" : " Det här är var hen var senast, inte var hen är nu."),
     false
@@ -148,7 +155,8 @@ function renderFriendMarkers(friends) {
     paintAvatar(entry.avatar, friend.display_name, friend.avatar_color);
     entry.btn.classList.toggle("stale", !live);
     entry.btn.setAttribute("aria-label", `${friend.display_name}, ${friendTimeText(friend)}`);
-    entry.label.textContent = friend.display_name + (live ? "" : " · " + ageText(friend.age_seconds));
+    const status = statusOf(friend);
+    entry.label.textContent = (status ? status.emoji + " " : "") + friend.display_name + (live ? "" : " · " + ageText(friend.age_seconds));
   });
 
   friendMarkers.forEach((entry, id) => {
