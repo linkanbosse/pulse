@@ -67,21 +67,21 @@ function showMapError(text) {
 // Ger kartan PULSE-färger (lila-blå ton) i stället för OpenFreeMaps neutralt grå mörka stil.
 function tintMap() {
   const paint = [
-    ["background", "background-color", "#0b0b14"],
-    ["water", "fill-color", "#132233"],
-    ["waterway", "line-color", "#132233"],
-    ["landuse_park", "fill-color", "#14261d"],
-    ["landcover_wood", "fill-color", "#14261d"],
-    ["building", "fill-color", "#121220"],
-    ["building", "fill-outline-color", "#1c1c2e"],
-    ["highway_path", "line-color", "#1f1f33"],
-    ["highway_minor", "line-color", "#1a1a2b"],
-    ["highway_major_casing", "line-color", "#2a2a44"],
-    ["highway_major_inner", "line-color", "#22223a"],
-    ["highway_major_subtle", "line-color", "#22223a"],
-    ["highway_motorway_casing", "line-color", "#3a3366"],
-    ["highway_motorway_inner", "line-color", "#2b2650"],
-    ["highway_motorway_subtle", "line-color", "#2b2650"],
+    ["background", "background-color", "#151526"],
+    ["water", "fill-color", "#173a5c"],
+    ["waterway", "line-color", "#173a5c"],
+    ["landuse_park", "fill-color", "#18392a"],
+    ["landcover_wood", "fill-color", "#18392a"],
+    ["building", "fill-color", "#1f1f36"],
+    ["building", "fill-outline-color", "#2a2a46"],
+    ["highway_path", "line-color", "#33335a"],
+    ["highway_minor", "line-color", "#2c2c4a"],
+    ["highway_major_casing", "line-color", "#4a4a78"],
+    ["highway_major_inner", "line-color", "#3a3a62"],
+    ["highway_major_subtle", "line-color", "#3a3a62"],
+    ["highway_motorway_casing", "line-color", "#6a55c0"],
+    ["highway_motorway_inner", "line-color", "#4c3f96"],
+    ["highway_motorway_subtle", "line-color", "#4c3f96"],
   ];
   paint.forEach(([layer, prop, value]) => {
     if (map.getLayer(layer)) map.setPaintProperty(layer, prop, value);
@@ -89,7 +89,7 @@ function tintMap() {
   // Lite ljusare text så att gatunamn och orter går att läsa på mobilen.
   map.getStyle().layers.forEach(layer => {
     if (layer.type === "symbol" && layer.layout && layer.layout["text-field"]) {
-      map.setPaintProperty(layer.id, "text-color", "#8a8aa8");
+      map.setPaintProperty(layer.id, "text-color", "#b4b4d2");
     }
   });
 }
@@ -189,9 +189,16 @@ function initMap() {
     drawAccuracy();
   });
 
-  map.on("error", () => {
+  map.on("error", event => {
     // Fel innan kartan hunnit laddas betyder oftast att mobilen saknar internet.
-    if (!mapReady) showMapError("Kartan kunde inte hämtas just nu. Kontrollera internet och ladda om sidan.");
+    if (!mapReady) {
+      showMapError("Kartan kunde inte hämtas just nu. Kontrollera internet och ladda om sidan.");
+      return;
+    }
+    // Om kartbitarna inte går att hämta blir kartan tom. Säg det i stället för att visa en svart yta.
+    if (event && event.sourceId === "openmaptiles") {
+      showMapError("Kartbilderna kunde inte hämtas. Kontrollera internet, eller stäng av annonsblockerare för sidan, och ladda om.");
+    }
   });
 
   renderMapFriends();
