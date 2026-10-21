@@ -4,7 +4,7 @@ PULSE är en gratis social kartapp där du kan se var dina vänner är, men bara
 
 > Status: etapp 4 (vänner). Appen är en webbapp (PWA) som kan installeras på hemskärmen.
 >
-> - Fungerar på riktigt: kartan (OpenStreetMap-data via OpenFreeMap), knappen "min position" (mobilens GPS, sparas inte), navigering, installation på hemskärmen, konton (registrera, logga in/ut, glömt lösenord, radera konto) profil (namn, användarnamn, färg) och vänner (vänkod, förfrågningar, acceptera/avvisa, ta bort, blockera) när Supabase är inställt i `config.js`.
+> - Fungerar på riktigt: kartan (OpenStreetMap-data via OpenFreeMap), knappen "min position" (mobilens GPS, sparas inte), navigering, installation på hemskärmen, konton (registrera, logga in/ut, glömt lösenord, radera konto), profil (namn, användarnamn, färg) och vänner (vänkod, förfrågningar, acceptera/avvisa, ta bort, blockera) när Supabase är inställt i `config.js`.
 > - Testdata: personerna och positionerna på kartan är påhittade tills platsdelning kommer i etapp 5. När du visar din position flyttas de runt dig.
 
 ## Filer
