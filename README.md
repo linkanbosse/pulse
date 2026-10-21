@@ -2,10 +2,10 @@
 
 PULSE är en gratis social kartapp där du kan se var dina vänner är, men bara när de själva har valt att dela sin position.
 
-> Status: etapp 3 (konton och profiler). Appen är en webbapp (PWA) som kan installeras på hemskärmen.
+> Status: etapp 4 (vänner). Appen är en webbapp (PWA) som kan installeras på hemskärmen.
 >
-> - Fungerar på riktigt: kartan (OpenStreetMap-data via OpenFreeMap), knappen "min position" (mobilens GPS, sparas inte), navigering, installation på hemskärmen, konton (registrera, logga in/ut, glömt lösenord, radera konto) och profil (namn, användarnamn, färg) när Supabase är inställt i `config.js`.
-> - Testdata: alla vänner och deras positioner är påhittade. När du visar din position flyttas testvännerna runt dig.
+> - Fungerar på riktigt: kartan (OpenStreetMap-data via OpenFreeMap), knappen "min position" (mobilens GPS, sparas inte), navigering, installation på hemskärmen, konton (registrera, logga in/ut, glömt lösenord, radera konto), profil (namn, användarnamn, färg) och vänner (vänkod, förfrågningar, acceptera/avvisa, ta bort, blockera) när Supabase är inställt i `config.js`.
+> - Testdata: personerna och positionerna på kartan är påhittade tills platsdelning kommer i etapp 5. När du visar din position flyttas de runt dig.
 
 ## Filer
 
@@ -15,8 +15,10 @@ PULSE är en gratis social kartapp där du kan se var dina vänner är, men bara
 | `style.css` | Utseendet (mörkt tema, färger, layout) |
 | `app.js` | Logiken: byta vy, karta, testvänner, hämta din position |
 | `account.js` | Konton och profil (Supabase) |
+| `friends.js` | Vänner: vänkod, förfrågningar, blockering (Supabase) |
 | `config.js` | Supabase-adress och publik nyckel. Bara offentliga värden, aldrig secret/service_role |
 | `supabase/etapp3-profiler.sql` | Databasen för profiler med Row Level Security. Körs en gång i Supabase SQL Editor |
+| `supabase/etapp4-vanner.sql` | Vänkoder, förfrågningar, vänskaper och blockeringar. Körs en gång efter etapp 3-filen |
 | `manifest.json` | Gör att appen kan installeras på hemskärmen |
 | `sw.js` | Service worker som gör appen installerbar och laddar om senaste versionen |
 | `icons/` | Appikoner |
@@ -70,7 +72,15 @@ Projektet byggs helt från mobilen och med 0 kr i budget.
 - I tabellen `profiles`: visningsnamn, valfritt användarnamn, avatarfärg och när profilen skapades/ändrades.
 - Ingen position sparas. Varje användare kan bara läsa och ändra sin egen profil (Row Level Security), och kan radera sitt konto själv.
 
+## Vad som sparas (etapp 4)
+
+- `profiles.friend_code`: din vänkod (8 tecken, slumpad, går att byta).
+- `friend_requests`, `friendships`, `blocks`: vem som har skickat förfrågan till vem, vilka som är vänner och vem som har blockerat vem, med tidpunkt.
+- `friend_code_attempts`: bara tidpunkten när någon skrivit in en kod (max 20 försök i timmen, mot kodgissning). Raderas efter en timme.
+- Tabellerna kan inte läsas direkt från appen. Allt går via databasfunktioner som kontrollerar vem du är. Du ser bara namn, användarnamn och färg för dina vänner, dina förfrågningar och dem du blockerat. Andras vänkoder visas aldrig, och den som blockerat dig syns inte.
+- Raderar du ditt konto försvinner även dina vänskaper, förfrågningar och blockeringar.
+
 ## Innan offentlig lansering
 
 - Slå på "Confirm email" i Supabase igen och koppla en egen gratis e-posttjänst (SMTP), annars räcker 2 mejl i timmen inte.
-- Integritetspolicy och användarvillkor (GDPR), blockering och rapportering.
+- Integritetspolicy och användarvillkor (GDPR) och rapportering av användare (blockering finns sedan etapp 4).

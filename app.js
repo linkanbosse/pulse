@@ -1,5 +1,5 @@
-// PULSE – etapp 2 (riktig karta)
-// VIKTIGT: allt i TEST_FRIENDS är påhittad testdata. Inga riktiga personer eller positioner.
+// PULSE – karta (etapp 2). Riktiga vänner finns i friends.js (etapp 4).
+// VIKTIGT: allt i TEST_FRIENDS är påhittad testdata som bara visas på kartan, tills platsdelning kommer i etapp 5.
 // Kartan är äkta: MapLibre GL JS (ritar kartan) + OpenFreeMap (gratis kartdata från OpenStreetMap).
 
 // Testvännernas plats anges som en förskjutning (i grader) från en mittpunkt.
@@ -204,48 +204,6 @@ function initMap() {
   renderMapFriends();
 }
 
-// ---------- Vänlista ----------
-
-function renderFriendList() {
-  const list = document.getElementById("friend-list");
-  TEST_FRIENDS.forEach(friend => {
-    const li = document.createElement("li");
-    // Vänner som delar sin plats går att trycka på för att visa dem på kartan.
-    const row = document.createElement(friend.sharing ? "button" : "div");
-    row.className = "friend";
-    row.appendChild(createAvatar(friend));
-
-    const info = document.createElement("div");
-    info.className = "friend-info";
-    const name = document.createElement("div");
-    name.className = "friend-name";
-    name.textContent = friend.name;
-    const status = document.createElement("div");
-    status.className = "friend-status";
-    status.textContent = friend.status;
-    info.append(name, status);
-
-    const time = document.createElement("div");
-    time.className = "friend-time" + (friend.sharing ? "" : " paused");
-    time.textContent = timeText(friend);
-
-    row.append(info, time);
-    if (friend.sharing) {
-      row.setAttribute("aria-label", `Visa ${friend.name} på kartan (testdata)`);
-      row.addEventListener("click", () => {
-        showView("map");
-        if (map) {
-          const pos = friendPosition(friend);
-          map.flyTo({ center: [pos.lng, pos.lat], zoom: ME_ZOOM, offset: [0, -80] });
-        }
-        showFriendCard(friend);
-      });
-    }
-    li.appendChild(row);
-    list.appendChild(li);
-  });
-}
-
 function showView(name) {
   document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
   document.getElementById("view-" + name).classList.add("active");
@@ -339,7 +297,6 @@ document.getElementById("location-close").addEventListener("click", () => {
 });
 
 initMap();
-renderFriendList();
 
 // Gör appen installerbar (PWA). Misslyckas tyst om det inte stöds.
 if ("serviceWorker" in navigator) {
