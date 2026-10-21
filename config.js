@@ -7,6 +7,6 @@
 // Båda värdena är OFFENTLIGA och får ligga i koden. Databasen skyddas av Row Level Security.
 // Lägg ALDRIG in "secret"-nyckeln (sb_secret_...) eller "service_role" här. Appen vägrar använda dem.
 window.PULSE_CONFIG = {
-  supabaseUrl: "",
-  supabaseKey: "",
+  supabaseUrl: "https://scrzlnzcawzhwiylwxfn.supabase.co",
+  supabaseKey: "sb_publishable_Tm2R_KddiYkfp7o7jJAeHw_2pg70HGI",
 };
