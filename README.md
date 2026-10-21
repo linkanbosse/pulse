@@ -2,9 +2,9 @@
 
 PULSE är en gratis social kartapp där du kan se var dina vänner är, men bara när de själva har valt att dela sin position.
 
-> Status: etapp 5 (platsdelning). Appen är en webbapp (PWA) som kan installeras på hemskärmen.
+> Status: etapp 6 (statusar och aktiviteter). Appen är en webbapp (PWA) som kan installeras på hemskärmen.
 >
-> - Fungerar på riktigt: kartan (OpenStreetMap-data via OpenFreeMap), knappen "min position" (mobilens GPS), navigering, installation på hemskärmen, konton, profil, vänner (vänkod, förfrågningar, blockering) och platsdelning med utvalda vänner (pausa, osynligt läge, live/inaktuell med tid) när Supabase är inställt i `config.js`.
+> - Fungerar på riktigt: kartan (OpenStreetMap-data via OpenFreeMap), knappen "min position" (mobilens GPS), navigering, installation på hemskärmen, konton, profil, vänner (vänkod, förfrågningar, blockering) platsdelning med utvalda vänner (pausa, osynligt läge, live/inaktuell med tid), statusar och aktiviteter (fliken Häng) när Supabase är inställt i `config.js`.
 > - Ingen testdata längre: personerna på kartan är dina riktiga vänner som delar sin position med dig.
 
 ## Filer
@@ -17,10 +17,12 @@ PULSE är en gratis social kartapp där du kan se var dina vänner är, men bara
 | `account.js` | Konton och profil (Supabase) |
 | `friends.js` | Vänner: vänkod, förfrågningar, blockering (Supabase) |
 | `location.js` | Platsdelning: vem får se dig, skicka position, pausa, osynligt läge, vännernas positioner (Supabase) |
+| `social.js` | Häng: din status, vännernas statusar och aktiviteter (Supabase) |
 | `config.js` | Supabase-adress och publik nyckel. Bara offentliga värden, aldrig secret/service_role |
 | `supabase/etapp3-profiler.sql` | Databasen för profiler med Row Level Security. Körs en gång i Supabase SQL Editor |
 | `supabase/etapp4-vanner.sql` | Vänkoder, förfrågningar, vänskaper och blockeringar. Körs en gång efter etapp 3-filen |
 | `supabase/etapp5-platsdelning.sql` | Platsdelning med behörighetskontroll. Körs en gång efter etapp 4-filen |
+| `supabase/etapp6-status-aktiviteter.sql` | Statusar och aktiviteter med behörighetskontroll. Körs en gång efter etapp 5-filen |
 | `manifest.json` | Gör att appen kan installeras på hemskärmen |
 | `sw.js` | Service worker som gör appen installerbar och laddar om senaste versionen |
 | `icons/` | Appikoner |
@@ -95,6 +97,14 @@ Projektet byggs helt från mobilen och med 0 kr i budget.
 - Positionen raderas direkt när du pausar, slår på osynligt läge, slutar dela med alla, loggar ut, tar bort eller blockerar den sista vännen du delar med, och automatiskt efter 24 timmar.
 - En vän får bara dina koordinater om ni är vänner, ingen av er har blockerat den andra, du har valt just den vännen och du inte har pausat eller är osynlig. Tabellerna kan inte läsas direkt från appen (Row Level Security utan regler), allt går via databasfunktioner.
 - Vännens ålder på positionen räknas av servern. En position äldre än 2 minuter visas grå med tid ("Senast 14:32 · 12 min sedan"), aldrig som live.
+
+## Vad som sparas (etapp 6)
+
+- `statuses`: din status (Ute, Hemma eller Vill hitta på något), en valfri text på högst 40 tecken och när den slutar gälla (högst 24 timmar). En rad per person. Raderas när tiden gått ut eller när du tar bort den.
+- `activities`: rubrik, valfri plats som **text** (inga koordinater) och starttid. Raderas 6 timmar efter starttiden eller när du ställer in den. Högst 5 samtidigt per person.
+- `activity_members`: vem som har gått med i vilken aktivitet.
+- Din status ser bara dina vänner, och ingen när osynligt läge är på. En aktivitet ser bara skaparens vänner, och bara de kan gå med. Tar ni bort varandra som vänner, eller blockerar, lämnar ni varandras aktiviteter automatiskt. Deltagare som du har blockerat (eller som blockerat dig) visas inte. Tabellerna kan inte läsas direkt från appen, allt går via databasfunktioner.
+- Inga notiser skickas ännu. Vännerna ser statusar och aktiviteter när de öppnar appen (uppdateras var 30:e sekund medan appen är öppen).
 
 ## Begränsningar med webbapp (PWA)
 
