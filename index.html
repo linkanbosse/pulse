@@ -12,6 +12,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PULSE">
+  <link rel="stylesheet" href="vendor/maplibre-gl/maplibre-gl.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -24,30 +25,12 @@
     <!-- Vy 1: Karta -->
     <main id="view-map" class="view active" aria-label="Karta">
       <div class="map" id="map">
-        <svg class="map-art" viewBox="0 0 400 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-          <rect width="400" height="700" fill="#10101c"/>
-          <path d="M-20 520 C 80 470, 140 560, 230 500 S 380 430, 430 470 L 430 720 L -20 720 Z" fill="#132233"/>
-          <ellipse cx="300" cy="170" rx="70" ry="45" fill="#14261d"/>
-          <ellipse cx="90" cy="330" rx="45" ry="60" fill="#14261d"/>
-          <g stroke="#1f1f33" stroke-width="14" fill="none" stroke-linecap="round">
-            <path d="M-10 120 L 410 200"/>
-            <path d="M-10 420 L 410 360"/>
-            <path d="M120 -10 L 170 710"/>
-            <path d="M300 -10 L 260 710"/>
-          </g>
-          <g stroke="#191929" stroke-width="6" fill="none" stroke-linecap="round">
-            <path d="M-10 270 L 410 280"/>
-            <path d="M-10 610 L 410 580"/>
-            <path d="M40 -10 L 60 710"/>
-            <path d="M210 -10 L 220 710"/>
-            <path d="M370 -10 L 350 710"/>
-          </g>
-        </svg>
+        <!-- Den riktiga kartan (MapLibre + OpenFreeMap) ritas här av app.js -->
+        <div id="map-canvas" class="map-canvas"></div>
 
-        <div class="map-note">Exempelkarta och testpersoner · riktig karta i etapp 2</div>
+        <div id="map-error" class="map-error" hidden></div>
 
-        <!-- Vänner på kartan fylls i av app.js (testdata) -->
-        <div id="map-friends"></div>
+        <div class="map-note">Riktig karta · vännerna är testdata</div>
 
         <button id="locate-btn" class="locate-btn" aria-label="Visa min position">
           <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
@@ -65,7 +48,7 @@
             <button id="location-close" class="icon-btn" aria-label="Stäng">✕</button>
           </div>
           <p id="location-text"></p>
-          <p class="fine">Positionen visas bara här på din mobil. Den sparas inte och skickas inte till någon.</p>
+          <p id="location-fine" class="fine">Positionen visas bara här på din mobil. Den sparas inte och skickas inte till någon. Kartbilderna hämtas från OpenFreeMap, som då ser ungefär vilket område du tittar på (som när du öppnar en vanlig webbkarta).</p>
         </div>
       </div>
     </main>
@@ -119,6 +102,7 @@
     </nav>
   </div>
 
+  <script src="vendor/maplibre-gl/maplibre-gl.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

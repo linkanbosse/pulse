@@ -104,7 +104,33 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* Karta */
 .map { position: relative; width: 100%; height: 100%; overflow: hidden; }
-.map-art { position: absolute; inset: 0; width: 100%; height: 100%; }
+.map-canvas { position: absolute; inset: 0; background: var(--bg); }
+
+.map-error {
+  position: absolute;
+  top: 50%;
+  left: 24px;
+  right: 24px;
+  transform: translateY(-50%);
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 16px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  z-index: 6;
+}
+.map-error[hidden] { display: none; }
+
+/* MapLibres källhänvisning (krävs av OpenStreetMap/OpenFreeMap) i mörkt tema */
+.maplibregl-ctrl-attrib,
+.maplibregl-ctrl-attrib.maplibregl-compact {
+  background: rgba(22, 22, 37, .85) !important;
+  color: var(--muted);
+}
+.maplibregl-ctrl-attrib a { color: var(--muted); }
+.maplibregl-ctrl-attrib-button { filter: invert(1); background-color: transparent !important; }
 
 .map-note {
   position: absolute;
@@ -121,8 +147,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 
 .map-friend {
-  position: absolute;
-  transform: translate(-50%, -100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -130,9 +154,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
   border: none;
   background: none;
   padding: 0;
+  transform-origin: 50% 100%;
   animation: pop .35s ease backwards;
 }
-@keyframes pop { from { transform: translate(-50%, -100%) scale(.4); opacity: 0; } }
+@keyframes pop { from { transform: scale(.4); opacity: 0; } }
 .map-friend .label {
   font-size: 11px;
   font-weight: 700;
@@ -158,16 +183,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .avatar.big { width: 88px; height: 88px; font-size: 28px; }
 
 .me-dot {
-  position: absolute;
-  left: 50%; top: 55%;
   width: 22px; height: 22px;
-  margin: -11px 0 0 -11px;
   border-radius: 50%;
   background: #4da3ff;
   border: 4px solid #fff;
   box-shadow: 0 0 0 0 rgba(77, 163, 255, .6);
   animation: me 1.8s infinite;
-  z-index: 4;
 }
 @keyframes me {
   0%   { box-shadow: 0 0 0 0 rgba(77, 163, 255, .6); }
@@ -242,6 +263,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 .friend-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .friend {
+  width: 100%;
+  border: none;
+  text-align: left;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -249,6 +273,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   background: var(--surface);
   border-radius: var(--radius);
 }
+button.friend:active { background: var(--surface-2); }
 .friend-info { flex: 1; min-width: 0; }
 .friend-name { font-weight: 700; }
 .friend-status { font-size: 13px; color: var(--muted); margin-top: 2px; }

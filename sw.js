@@ -1,7 +1,7 @@
 // Enkel service worker: hämtar alltid senaste versionen från nätet först,
 // och använder sparad kopia bara om mobilen är offline.
 const CACHE_PREFIX = "pulse-";
-const CACHE = CACHE_PREFIX + "v1";
+const CACHE = CACHE_PREFIX + "v2";
 
 // Appens grundfiler sparas direkt vid installation, så att den kan öppnas offline.
 const APP_SHELL = [
@@ -10,6 +10,8 @@ const APP_SHELL = [
   "style.css",
   "app.js",
   "manifest.json",
+  "vendor/maplibre-gl/maplibre-gl.js",
+  "vendor/maplibre-gl/maplibre-gl.css",
   "icons/icon-192.png",
   "icons/icon-512.png",
 ];
@@ -32,6 +34,9 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
+  // Kartbilder från OpenFreeMap (andra webbplatser) sparas inte här, bara appens egna filer.
+  // Annars skulle cachen växa för varje område du tittar på.
+  if (new URL(event.request.url).origin !== self.location.origin) return;
   event.respondWith(
     fetch(event.request)
       .then(response => {
